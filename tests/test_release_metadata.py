@@ -11,7 +11,7 @@ import re
 import unittest
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
-CONCEPT_DOI = None  # set to "10.5281/zenodo.<n>" after the first Zenodo archive
+CONCEPT_DOI = "10.5281/zenodo.23459402"
 NO_DOI = "no concept DOI yet (set CONCEPT_DOI after the first Zenodo archive)"
 
 

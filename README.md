@@ -2,6 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 [![Tests](https://github.com/domattioli/sync-me/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/domattioli/sync-me/actions/workflows/tests.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23459402.svg)](https://doi.org/10.5281/zenodo.23459402)
 
 A Claude Code skill that runs an interactive, grill-style teaching session for a person working with a coding agent. It maps the user's likely uncertainty branches, anticipates the difficulty points, and checks recall per branch before it moves on.
 
@@ -116,7 +117,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 10. Reuse
 
-Cite with [CITATION.cff](CITATION.cff). A Zenodo DOI is added at the first archived release.
+Cite with [CITATION.cff](CITATION.cff) or the concept DOI [10.5281/zenodo.23459402](https://doi.org/10.5281/zenodo.23459402), which covers all released versions.
 
 ## 11. License
 
