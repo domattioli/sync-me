@@ -1,0 +1,15 @@
+# sync-me
+
+> A Claude Code skill that runs an interactive, grill-style teaching session for a person working with a coding agent, in three modes: unstick (one confusing point), catch-up (a long session the user missed) and walk (a task only the user can execute). It maps uncertainty branches and checks recall per branch.
+
+## Core
+
+- [README](README.md): motivation, installation, usage, notes location, method, limitations.
+- [SKILL.md](skills/sync-me/SKILL.md): the complete specification.
+- [AGENTS.md](AGENTS.md): instructions for a coding agent working on this repo.
+
+## Reference
+
+- [references/upstream-teach.md](skills/sync-me/references/upstream-teach.md): mapping against mattpocock/skills `teach`.
+- [tests/benchmark.md](skills/sync-me/tests/benchmark.md): metric and protocol.
+- [tests/fixtures/valid_runbook.json](skills/sync-me/tests/fixtures/valid_runbook.json): a full walk-mode runbook.

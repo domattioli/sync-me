@@ -1,0 +1,104 @@
+{
+  "title": "Cloudflare Pages + DNS + Access setup",
+  "steps": [
+    {
+      "id": 1,
+      "title": "Verify the build deployed",
+      "instruction": "Open the Cloudflare dashboard -> Pages -> your project -> Deployments tab. Find the newest row.",
+      "order_critical": false,
+      "success": {
+        "label": "OK -- deployment shows Success",
+        "assert": "Newest deployment row status = 'Success' and its commit SHA matches the SHA you just pushed"
+      },
+      "failures": [
+        {
+          "label": "Build failed",
+          "diagnosis_hint": "Open the failed deployment -> View build log. Read the last ~20 lines and quote the first error line back verbatim -- most failures are a wrong build command or output directory in the project's Settings -> Builds & deployments."
+        },
+        {
+          "label": "Can't find the Deployments tab",
+          "diagnosis_hint": "Confirm you're inside the Pages project (not the zone/DNS view) -- left nav should read Workers & Pages -> <project-name> -> Deployments."
+        },
+        {
+          "label": "Newest isn't the SHA I expect",
+          "diagnosis_hint": "Check which branch triggers Pages builds (Settings -> Builds & deployments -> Production branch) and confirm the push actually landed on that branch, not a PR preview branch."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Create the Access application BEFORE touching DNS",
+      "instruction": "Zero Trust dashboard -> Access -> Applications -> Add an application -> Self-hosted. Application domain = the exact hostname you are about to point DNS at (e.g. wiki.example.com). Add a policy requiring your own email.",
+      "order_critical": true,
+      "order_note": "Must complete and save this step before Step 3 (DNS). If DNS is repointed first, the hostname is briefly served with no auth gate in front of it.",
+      "success": {
+        "label": "OK -- application saved with a policy",
+        "assert": "Access -> Applications lists the new application, and its policy tab shows at least one allow rule (e.g. your email)"
+      },
+      "failures": [
+        {
+          "label": "Can't find Zero Trust / Access in the dashboard",
+          "diagnosis_hint": "Zero Trust is a separate top-level dashboard from the zone dashboard -- look for a shield icon or a separate URL under the account (not the DNS zone) view."
+        },
+        {
+          "label": "Save button is disabled or errors",
+          "diagnosis_hint": "Application domain field usually requires the exact hostname with no scheme (no https://) and no trailing slash -- paste just the hostname."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Generate the service-token secret locally",
+      "instruction": "In your terminal (not in this chat) run: openssl rand -hex 32   Copy the output and paste it into the Cloudflare Access service-token 'Client Secret' field yourself.",
+      "order_critical": false,
+      "secret_step": true,
+      "success": {
+        "label": "OK -- secret generated and pasted into the dashboard",
+        "assert": "Cloudflare shows the service token saved (Client ID + Client Secret pair listed under Access -> Service Auth)"
+      },
+      "failures": [
+        {
+          "label": "openssl not found",
+          "diagnosis_hint": "Use `python3 -c \"import secrets; print(secrets.token_hex(32))\"` as a fallback -- same effect, no extra install."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Point DNS at the Pages project",
+      "instruction": "DNS tab for the zone -> Add record -> Type CNAME, Name = the same hostname from Step 2, Target = <project>.pages.dev, Proxy status = Proxied (orange cloud).",
+      "order_critical": true,
+      "order_note": "Only do this after Step 2's Access application is live -- confirms the auth gate is already in front of the hostname before it resolves publicly.",
+      "success": {
+        "label": "OK -- record saved, shows Proxied",
+        "assert": "DNS record list shows the CNAME with the orange-cloud (Proxied) icon, not grey (DNS only)"
+      },
+      "failures": [
+        {
+          "label": "Record already exists / conflicts",
+          "diagnosis_hint": "Look for a leftover A or CNAME record on the same name from a prior setup attempt -- delete it before adding the new CNAME, Cloudflare won't let two records share a name+type."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Verify the whole path end to end",
+      "instruction": "In your terminal run: curl -I https://<your-hostname>",
+      "order_critical": false,
+      "success": {
+        "label": "OK -- got a 302 redirect to cloudflareaccess.com",
+        "assert": "Response headers show `HTTP/2 302` and a `location:` header pointing at a `cloudflareaccess.com` login URL"
+      },
+      "failures": [
+        {
+          "label": "Got a plain 200 with real content (no auth prompt)",
+          "diagnosis_hint": "The Access application's domain in Step 2 doesn't exactly match the hostname, or the DNS record isn't Proxied -- re-check both before retrying this step."
+        },
+        {
+          "label": "Got a 522 or 526 (origin/SSL error)",
+          "diagnosis_hint": "DNS hasn't propagated yet or SSL/TLS mode (SSL/TLS -> Overview) isn't Full -- wait ~60s and retry once before escalating."
+        }
+      ]
+    }
+  ]
+}

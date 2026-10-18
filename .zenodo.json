@@ -1,0 +1,10 @@
+{
+  "title": "sync-me",
+  "upload_type": "software",
+  "creators": [
+    {"name": "Mattioli, Dominik"}
+  ],
+  "license": "Apache-2.0",
+  "keywords": ["claude-code", "skill", "teaching", "human-in-the-loop", "retrieval-practice"],
+  "description": "<p>sync-me is a Claude Code skill that runs an interactive, grill-style teaching session for a person working with a coding agent. It maps the likely uncertainty branches, anticipates the difficulty points and checks recall per branch, in three modes: unstick, catch-up and walk.</p><h3>This release (1.0.0)</h3><p>First standalone release. Three modes, a notes location that is asked once per repo, a walk-mode runbook linter and a smoke test suite.</p><h3>Roadmap at 1.0.0</h3><p>Now: measured round trips per walk step. Next: a recorded benchmark for unstick and catch-up. Later: none planned.</p>"
+}

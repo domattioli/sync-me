@@ -1,0 +1,26 @@
+{
+  "title": "Broken runbook -- missing required fields",
+  "steps": [
+    {
+      "id": 1,
+      "title": "Step missing an instruction",
+      "success": {
+        "label": "OK",
+        "assert": "something happened"
+      },
+      "failures": [
+        { "label": "It broke", "diagnosis_hint": "look at logs" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Step with zero failure branches",
+      "instruction": "Do the thing.",
+      "success": {
+        "label": "OK",
+        "assert": "the thing was done"
+      },
+      "failures": []
+    }
+  ]
+}

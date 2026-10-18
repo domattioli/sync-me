@@ -1,0 +1,96 @@
+# Release workflow adapted from the DomI release template (release-setup section 7: not a Python
+# package, so the build and publish-pypi jobs are dropped; the github-release job and Zenodo stay).
+#
+# Tag push only, no manual trigger. The gate FAILS CLOSED: an empty DOMI_RO_TOKEN, a failed DomI
+# fetch, or a failed check stops the release. The release-integrity tool is fetched from DomI at run
+# time and never vendored.
+#
+# Repo variables: RELEASE_TITLE, DOMI_TOOL_REF. Repo secret: DOMI_RO_TOKEN (read-only on DomI).
+name: release
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --quiet pytest
+          sudo apt-get install -y jq
+      - name: Run test suite (includes the concept-DOI guard test)
+        run: |
+          bash skills/sync-me/tests/smoke.sh
+          python -m pytest tests -q
+
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require DOMI_RO_TOKEN
+        env:
+          DOMI_RO_TOKEN: ${{ secrets.DOMI_RO_TOKEN }}
+        run: |
+          if [ -z "$DOMI_RO_TOKEN" ]; then
+            echo "::error::secret DOMI_RO_TOKEN not set; release stopped"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release-integrity tool from DomI
+        uses: actions/checkout@v4
+        with:
+          repository: domattioli/DomI
+          ref: ${{ vars.DOMI_TOOL_REF || 'main' }}
+          token: ${{ secrets.DOMI_RO_TOKEN }}
+          path: .domi-tool
+          sparse-checkout: skills/release-integrity
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Scan the GitHub archive for leaks
+        run: python .domi-tool/skills/release-integrity/scripts/release_ignore.py verify --channel github
+
+  github-release:
+    needs: [test, gate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "No CHANGELOG.md section for ${version}" >&2
+            exit 1
+          fi
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --verify-tag \
+            --title "${{ vars.RELEASE_TITLE || github.event.repository.name }} ${GITHUB_REF_NAME#v}" \
+            --notes-file release-notes.md
+
+  # Zenodo needs no job: its GitHub integration is a repository webhook and archives the release.

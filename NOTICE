@@ -1,0 +1,13 @@
+sync-me
+Copyright 2026 Dominik Mattioli and sync-me contributors
+
+This product is licensed under the Apache License, Version 2.0
+(see LICENSE). Redistributions of this work, or of derivative works,
+must retain this NOTICE file.
+
+Parts of unstick and catch-up mode adapt learning-science ideas from
+mattpocock/skills `teach` (MIT). No upstream text is copied; see
+skills/sync-me/references/upstream-teach.md.
+
+Source: https://github.com/domattioli/sync-me
+Machine-readable citation: CITATION.cff
