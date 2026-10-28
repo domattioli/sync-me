@@ -1,6 +1,6 @@
 ---
 name: sync-me
-version: "3.0.0"
+version: "3.1.0"
 benchmark: operator_round_trips_to_success
 argument-hint: "What lost you, should I catch you up, or walk you through a task?"
 description: Interactive, grill-style teaching session for a person working with a coding agent, in three modes. UNSTICK (legacy alias "explain") finds the one point that lost the user, maps the likely uncertainty branches, explains one part per turn and checks recall per branch. CATCH-UP rebuilds the context of a long session the user missed (handoffs, git, PRs, notes, transcript), shows a 3-line card (goal, state, next decision), then teaches it top-down. WALK guides the user through a task only they can do (dashboard clicks, DNS, credential-bound or physical steps), one verified step at a time with pre-filled success and failure options. Reads prior notes first and writes a dated note per session. Triggers "sync me", "teach me", "explain X", "wait", "lost me", "why did you", "catch me up", "I'm lost, start over", "coming in cold", "walk me through", and the legacy names "teach-me" and "machine-teaching".
@@ -38,6 +38,7 @@ Every question, answer, step and note the user reads follows these rules. Never 
 5. Keep exact numbers, names, paths and commands. Do not round or paraphrase them.
 6. No filler, no praise, no recap at the end, no closing pleasantries.
 7. No em-dashes. No "it's not X, it's Y" framing. No stacked hedges; state the uncertainty once, with its reason.
+8. Always interactive. Ask every question through `AskUserQuestion`, never in prose. Never answer for the user, and never move to the next part before the user answers.
 
 ## Unstick mode
 
@@ -150,6 +151,7 @@ Runbook schema: `{"title": str, "steps": [{"id": int, "title": str, "instruction
 
 ## Version history
 
+- **v3.1.0** (2026-10-28): operator rule: always interactive, questions only through `AskUserQuestion`, never prose.
 - **v3.0.0** (2026-10-18): renamed teach-me to sync-me and moved to a standalone repo. Self-contained: inline writing rules replace external writing skills. Notes location is asked once per repo and stored in `.sync-me/config` (local `.sync-me/` by default, or a central path). Legacy triggers kept.
 - **v2.6.0** (2026-10-18): explain renamed unstick; catch-up mode added.
 - **v2.5** (2026-10-03): recall checks, prior-note read and preferences file ported from upstream `teach`.
