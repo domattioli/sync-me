@@ -1,6 +1,6 @@
 # sync-me
 
-> A Claude Code skill that runs an interactive, grill-style teaching session for a person working with a coding agent, in three modes: unstick (one confusing point), catch-up (a long session the user missed) and walk (a task only the user can execute). It maps uncertainty branches and checks recall per branch.
+> A Claude Code skill that runs an interactive, grill-style teaching session for a person working with a coding agent, in four modes: unstick (one confusing point), catch-up (a long session the user missed), walk (a task only the user can execute) and decide (decisions the agent left for the user, asked one at a time with a recommendation and the cost of each option). It maps uncertainty branches and checks recall per branch. An optional Stop hook, off by default, starts decide mode when a reply leaves decisions in prose.
 
 ## Core
 
@@ -11,5 +11,6 @@
 ## Reference
 
 - [references/upstream-teach.md](skills/sync-me/references/upstream-teach.md): mapping against mattpocock/skills `teach`.
-- [tests/benchmark.md](skills/sync-me/tests/benchmark.md): metric and protocol.
+- [scripts/decide_stop_hook.sh](skills/sync-me/scripts/decide_stop_hook.sh): optional Stop hook for decide mode; plugin wiring in [plugins/sync-me/hooks/hooks.json](plugins/sync-me/hooks/hooks.json).
+- [tests/benchmark.md](skills/sync-me/tests/benchmark.md): metrics, protocol and the decide baseline.
 - [tests/fixtures/valid_runbook.json](skills/sync-me/tests/fixtures/valid_runbook.json): a full walk-mode runbook.

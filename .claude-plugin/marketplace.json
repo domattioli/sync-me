@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "sync-me",
-  "description": "Interactive, grill-style teaching sessions for people working with coding agents: unstick one confusing point, catch up on a long session, or walk through a task only the user can do.",
+  "description": "Interactive, grill-style teaching sessions for people working with coding agents: unstick one confusing point, catch up on a long session, walk through a task only the user can do, or answer the decisions an agent left waiting.",
   "owner": {
     "name": "domattioli",
     "url": "https://github.com/domattioli"
@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "sync-me",
-      "description": "Three modes. Unstick: find the point that lost you and teach it one part per turn with recall checks. Catch-up: rebuild a long session's context and teach it top-down. Walk: one verified step at a time for tasks only you can execute.",
+      "description": "Four modes. Unstick: find the point that lost you and teach it one part per turn with recall checks. Catch-up: rebuild a long session's context and teach it top-down. Walk: one verified step at a time for tasks only you can execute. Decide: pull the decisions an agent left for you out of its reply and ask them one at a time, each with a recommendation and what each option costs. Includes an optional Stop hook for decide mode, off until you turn it on.",
       "source": "./plugins/sync-me",
       "category": "productivity"
     }

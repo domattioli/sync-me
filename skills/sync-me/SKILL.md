@@ -1,22 +1,23 @@
 ---
 name: sync-me
-version: "3.1.0"
+version: "3.2.0"
 benchmark: operator_round_trips_to_success
-argument-hint: "What lost you, should I catch you up, or walk you through a task?"
-description: Interactive, grill-style teaching session for a person working with a coding agent, in three modes. UNSTICK (legacy alias "explain") finds the one point that lost the user, maps the likely uncertainty branches, explains one part per turn and checks recall per branch. CATCH-UP rebuilds the context of a long session the user missed (handoffs, git, PRs, notes, transcript), shows a 3-line card (goal, state, next decision), then teaches it top-down. WALK guides the user through a task only they can do (dashboard clicks, DNS, credential-bound or physical steps), one verified step at a time with pre-filled success and failure options. Reads prior notes first and writes a dated note per session. Triggers "sync me", "teach me", "explain X", "wait", "lost me", "why did you", "catch me up", "I'm lost, start over", "coming in cold", "walk me through", and the legacy names "teach-me" and "machine-teaching".
+argument-hint: "What lost you, should I catch you up, walk you through a task, or help you decide?"
+description: Interactive, grill-style teaching session for a person working with a coding agent, in four modes. UNSTICK (legacy alias "explain") finds the one point that lost the user, maps the likely uncertainty branches, explains one part per turn and checks recall per branch. CATCH-UP rebuilds the context of a long session the user missed (handoffs, git, PRs, notes, transcript), shows a 3-line card (goal, state, next decision), then teaches it top-down. WALK guides the user through a task only they can do (dashboard clicks, DNS, credential-bound or physical steps), one verified step at a time with pre-filled success and failure options. DECIDE pulls the decisions waiting on the user out of what the agent already said, asks the root decision first, then asks each one through AskUserQuestion with a recommendation and what each option leads to and costs; an optional Stop hook, off by default, forces it. Reads prior notes first and writes a dated note per session. Triggers "sync me", "teach me", "explain X", "wait", "lost me", "why did you", "catch me up", "I'm lost, start over", "coming in cold", "walk me through", "what do you need from me", "what do I need to decide", "help me decide", "what are you asking", "your calls", and the legacy names "teach-me" and "machine-teaching".
 ---
 
 # sync-me
 
-Three modes, one purpose: the user ends up understanding, or having done, something the agent could not hand over as plain output.
+Four modes, one purpose: the user ends up understanding, having done, or having decided something the agent could not hand over as plain output.
 
 | Mode | Who acts | Trigger | Output |
 |---|---|---|---|
 | **unstick** (legacy alias: explain) | agent explains one point that lost the user | "teach me", "explain X", "wait", "lost me", "why did you" | answers and a dated note |
 | **catch-up** | agent rebuilds the context, then teaches it top-down | "sync me", "catch me up", "I'm lost, start over", "coming in cold", "where are we, I'm lost" | 3-line card, answers and a dated note |
 | **walk** | user acts, agent guides and verifies | "walk me through", a task the agent cannot execute | one verified step per turn |
+| **decide** | agent pulls out the decisions waiting on the user and asks them one at a time | "what do you need from me", "what do I need to decide", "help me decide", "what are you asking", "your calls", a request for an interactive or one-at-a-time pass right after a reply that lists decisions | one-line card, answers and a dated note |
 
-Pick the mode from the request. If it is unclear whether one point or the whole thread was lost, ask once with `AskUserQuestion`: "One point lost you" or "I lost the whole thread". The legacy names "teach-me", "explain" and "machine-teaching" still trigger this skill.
+Pick the mode from the request. Unstick is one point the user did not understand. Catch-up is the whole thread. Decide is "I follow, but I cannot answer what you asked me". Walk is a task only the user can do. If it is unclear whether one point or the whole thread was lost, ask once with `AskUserQuestion`: "One point lost you" or "I lost the whole thread". The legacy names "teach-me", "explain" and "machine-teaching" still trigger this skill.
 
 ## Where notes go
 
@@ -42,7 +43,7 @@ Every question, answer, step and note the user reads follows these rules. Never 
 
 ## Unstick mode
 
-Modeled on a grill session, pointed the other way: a grill questions the user's plan; unstick makes sure the user understands the agent's. Use it when the user was following along and one point lost them.
+Modeled on a grill session, pointed the other way: a grill questions the user's plan; unstick makes sure the user understands the agent's. Use it when the user was following along and one point lost them. If the user follows but cannot answer a decision the agent asked for, use decide mode.
 
 Before step 0, **find the point.** Ask once with `AskUserQuestion` which point lost the user. Options: the 2-3 most likely candidates from recent turns (the last decision, the last command or diff, the last term the agent used), labelled the way the user would say them, plus "Other". Skip this question only when the request already names the point. Then run steps 0-7 narrowed to that point.
 
@@ -60,7 +61,7 @@ There is no question cap. Keep asking until every mapped part is settled, no con
 
 ## Catch-up mode
 
-Use it when the user comes in cold after a long session: a break, a context reset, a session that ran while they were away. Unstick narrows to one point; catch-up rebuilds the whole thread, then teaches it top-down. A plain status request ("where are we") gets a short status answer; catch-up starts when the user says they are lost.
+Use it when the user comes in cold after a long session: a break, a context reset, a session that ran while they were away. Unstick narrows to one point; catch-up rebuilds the whole thread, then teaches it top-down. A plain status request ("where are we") gets a short status answer; catch-up starts when the user says they are lost. If the user follows the thread and only needs to answer what the agent asked, use decide mode.
 
 0. **Rebuild the context before speaking.** Read, in this order, whatever exists: `.claude/handoffs/` (newest first), `git log` since the last handoff or the branch point, `git status` and the current branch, open PRs (`gh pr list`), `<notes>/` and `<root>/NOTES.md`, then the transcript of this session. Every claim in the card and the parts needs evidence from one of these (file:line, commit, PR number). Do not ask the user what happened; the sources answer that.
 1. **Card first.** Three lines: the goal of the work, the current state (done, in flight), and the next decision that waits on the user. If nothing waits on the user, the third line says so.
@@ -89,7 +90,7 @@ The agent cannot click the button, so it teaches the user to click it, verifies 
 
 - The agent can do it itself (it has the tool, API or credential). Do it; do not narrate it as a human task.
 - A single trivial instruction with no failure branch ("click Save"). A plain instruction is enough.
-- Refining a plan before execution (a grill session), understanding the agent's plan (unstick), or rebuilding lost context (catch-up). Walk starts once the plan is settled.
+- Refining a plan before execution (a grill session), understanding the agent's plan (unstick), rebuilding lost context (catch-up), or answering decisions the agent asked for (decide). Walk starts once the plan is settled.
 
 ### Failure modes walk mode replaces
 
@@ -109,6 +110,29 @@ Pre-filled failure options make most debugging a single click, and per-step veri
 7. **Numbering.** If the step count changes mid-run, say so plainly.
 8. **Close** with the end state (what is live, what to check again later). Then write the session-end note.
 
+## Decide mode
+
+The agent has decisions waiting on the user. Decide mode pulls them out of what the agent already said and gets each one answered with the context needed to answer it. Use it when the user follows the thread but cannot answer what the agent asked.
+
+0. **Read what the user already knows,** as in unstick step 0.
+1. **Collect.** Read the agent's last reply and every turn since the user's last answer. List every decision that waits on the user, including implied ones: a recommendation that needs sign-off, a trailing "want me to", a status bullet that hides a choice. If the codebase or logs can answer one, explore, answer it and drop it from the list.
+2. **Find the root.** If several decisions hang on one that was never stated, state it and ask it first. Order the rest by dependency, then by what blocks the most work.
+3. **Card.** One line: how many decisions wait, with a short plain title for each. Example: "3 decisions: which database, keep the old endpoint, release date."
+4. **One decision per `AskUserQuestion` call.** A preference in `<root>/NOTES.md` may let independent decisions share a call, up to 4. Never fall back to prose questions.
+5. **Give the context to answer.** Every question carries, in plain words, with each term defined and no bare issue numbers:
+   - what is being decided, and why the decision exists (one sentence);
+   - for each option, what happens next and what it costs (in the option's description);
+   - what happens if the user picks nothing or says no;
+   - when several agents or models disagreed, who recommends which.
+
+   Put the recommended option first, labelled "(Recommended)". Prefer two options; use four at most, counting "Explain this first". "Explain this first" runs unstick on that one decision, then asks the decision again.
+6. **Act on each answer.** Record it in the dated note (as in unstick step 6), then act on it or say when it will be acted on. A new decision that an answer opens joins the list.
+7. **Close** with one line: decisions made, decisions still open. Then write the session-end note.
+
+Same question policy as unstick: no cap; stop early only when the user says so.
+
+**Optional Stop hook.** `scripts/decide_stop_hook.sh` makes decide mode run without anyone remembering to ask for it. When a turn ends with decisions for the user written as prose and no `AskUserQuestion` call, the hook blocks the stop once and tells the agent to run decide mode. It is off until the user turns it on with `scripts/notes_path.sh --hook on` (this repo) or `--hook on --user` (every repo). It never fires twice in a row, and `SYNC_ME_DECIDE_HOOK=off` in the environment turns it off for a session.
+
 ## Session-end note (all modes)
 
 After the close, write 2-4 lines:
@@ -116,16 +140,18 @@ After the close, write 2-4 lines:
 - **Gap:** the concept or distinction the user was missing, or the friction point the session found.
 - **Fix:** what resolved it (the explanation, analogy, step or evidence that worked).
 
-Append it to the dated note in unstick and catch-up. In walk mode, put it in the chat, and in the dated note if one exists. If no gap came up, write one line that says so.
+Append it to the dated note in unstick, catch-up and decide. In walk mode, put it in the chat, and in the dated note if one exists. If no gap came up, write one line that says so.
 
 ## Scripts
 
 ```
 scripts/notes_path.sh [--root | --set local|<path>]   # resolve or set the notes location
+scripts/notes_path.sh --hook on|off [--user]          # turn the decide Stop hook on or off
 scripts/validate_runbook.sh <runbook.json>            # lint a pre-authored walk runbook
+scripts/decide_stop_hook.sh < stop-hook.json          # Stop hook; always exits 0
 ```
 
-`notes_path.sh` exit codes: 0 ok, 2 usage error, 4 no config yet (ask the user).
+`notes_path.sh` exit codes: 0 ok, 2 usage error, 4 no config yet (ask the user). The config holds one `key=value` per line: `notes_root=...` and, when set, `decide_hook=on|off`.
 
 `validate_runbook.sh` exit codes: 0 valid; 1 schema error (missing field, empty failures, `order_critical` without `order_note`, duplicate id); 2 usage error (no arg, missing file, no `jq`, invalid JSON); 3 blocked, a step contains a real-looking secret (takes priority).
 
@@ -142,15 +168,17 @@ Runbook schema: `{"title": str, "steps": [{"id": int, "title": str, "instruction
 
 ## Files
 
-- `scripts/notes_path.sh`: notes location config (ask once, remember).
+- `scripts/notes_path.sh`: notes location and decide hook config (ask once, remember).
 - `scripts/validate_runbook.sh`: schema and secret-hygiene linter for walk runbooks.
-- `tests/smoke.sh`: runbook linter scenarios, notes config scenarios, SKILL.md contract.
+- `scripts/decide_stop_hook.sh`: optional Stop hook for decide mode, off by default.
+- `tests/smoke.sh`: runbook linter scenarios, notes config scenarios, decide hook scenarios on synthetic transcripts, SKILL.md contract.
 - `tests/fixtures/`: a full 5-step Cloudflare Pages, DNS and Access runbook, and a schema-invalid runbook.
 - `tests/benchmark.md`: benchmark definition and baseline.
 - `references/upstream-teach.md`: pinned mapping against mattpocock/skills `teach`.
 
 ## Version history
 
+- **v3.2.0** (2026-11-12): decide mode added as the fourth mode, with an optional Stop hook (off by default) that runs it when a reply leaves decisions in prose.
 - **v3.1.0** (2026-10-28): operator rule: always interactive, questions only through `AskUserQuestion`, never prose.
 - **v3.0.0** (2026-10-18): renamed teach-me to sync-me and moved to a standalone repo. Self-contained: inline writing rules replace external writing skills. Notes location is asked once per repo and stored in `.sync-me/config` (local `.sync-me/` by default, or a central path). Legacy triggers kept.
 - **v2.6.0** (2026-10-18): explain renamed unstick; catch-up mode added.

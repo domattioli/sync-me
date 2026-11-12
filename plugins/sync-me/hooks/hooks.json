@@ -1,0 +1,16 @@
+{
+  "description": "Optional sync-me decide hook. It does nothing until the user turns it on with notes_path.sh --hook on, or a line decide_hook=on in the sync-me config.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/sync-me/scripts/decide_stop_hook.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
